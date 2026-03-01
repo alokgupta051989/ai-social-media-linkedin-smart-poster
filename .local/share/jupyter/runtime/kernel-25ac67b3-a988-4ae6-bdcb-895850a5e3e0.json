@@ -1,0 +1,13 @@
+{
+  "shell_port": 60957,
+  "iopub_port": 42411,
+  "stdin_port": 60159,
+  "control_port": 53725,
+  "hb_port": 43035,
+  "ip": "127.0.0.1",
+  "key": "a17818e0-a69df7458c7f0d308229516a",
+  "transport": "tcp",
+  "signature_scheme": "hmac-sha256",
+  "kernel_name": "python3",
+  "jupyter_session": "/home/sagemaker-user/shared/bedrock_fix.ipynb"
+}

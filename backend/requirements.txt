@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+boto3
+requests
+langchain
+langgraph
+langchain-aws
+pydantic
+pyngrok

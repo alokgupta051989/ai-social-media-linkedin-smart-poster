@@ -1,0 +1,26 @@
+{
+    "livy_session_startup_timeout_seconds": 180,
+    "logging_config": {
+      "version": 1,
+      "formatters": {
+        "magicsFormatter": {
+          "format": "%(asctime)s\t%(levelname)s\t%(message)s",
+          "datefmt": ""
+        }
+      },
+      "handlers": {
+        "magicsHandler": {
+          "class": "sagemaker_studio_dataengineering_sessions.sagemaker_base_session_manager.common.logger_utils.SessionManagerFileHandler",
+          "formatter": "magicsFormatter",
+          "file_name": "spark_magic"
+        }
+      },
+      "loggers": {
+        "magicsLogger": {
+          "handlers": ["magicsHandler"],
+          "level": "INFO",
+          "propagate": 0
+        }
+      }
+    }
+}

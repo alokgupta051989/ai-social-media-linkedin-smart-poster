@@ -1,0 +1,13 @@
+{
+  "shell_port": 39797,
+  "iopub_port": 42469,
+  "stdin_port": 37703,
+  "control_port": 53195,
+  "hb_port": 59293,
+  "ip": "127.0.0.1",
+  "key": "7cd41f7d-66a83f1da20ed0ce1a24eeff",
+  "transport": "tcp",
+  "signature_scheme": "hmac-sha256",
+  "kernel_name": "python3",
+  "jupyter_session": "/home/sagemaker-user/shared/jumpstart_fix.ipynb"
+}

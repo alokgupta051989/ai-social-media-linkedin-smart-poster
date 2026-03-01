@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LinkedIn Post Manager</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: #f5f5f5; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; background: white; border-radius: 8px; padding: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h1 { color: #0077b5; margin-bottom: 30px; text-align: center; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input, textarea, select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; }
+        textarea { height: 120px; resize: vertical; }
+        .btn { padding: 12px 24px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; margin: 5px; }
+        .btn-primary { background: #0077b5; color: white; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-warning { background: #ffc107; color: black; }
+        .btn:hover { opacity: 0.9; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .status { padding: 15px; margin: 15px 0; border-radius: 4px; }
+        .status.success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .status.error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .status.info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        .auth-section { background: #f8f9fa; padding: 20px; border-radius: 4px; margin-bottom: 20px; }
+        .hidden { display: none; }
+        .actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>LinkedIn Post Manager</h1>
+        
+        <!-- Authentication Section -->
+        <div class="auth-section">
+            <h3>LinkedIn Authentication</h3>
+            <div id="auth-status" class="status info">Not authenticated</div>
+            
+            <!-- Custom App Credentials -->
+            <div class="form-group">
+                <label>LinkedIn App Client ID (optional - use your own app):</label>
+                <input type="text" id="client-id" placeholder="Enter your LinkedIn app Client ID">
+            </div>
+            <div class="form-group">
+                <label>LinkedIn App Client Secret (optional):</label>
+                <input type="password" id="client-secret" placeholder="Enter your LinkedIn app Client Secret">
+            </div>
+            
+            <button id="auth-btn" class="btn btn-primary">Authenticate with LinkedIn</button>
+            <div class="form-group">
+                <label>Access Token (if you have one):</label>
+                <input type="text" id="access-token" placeholder="Enter your LinkedIn access token">
+                <button id="test-token-btn" class="btn btn-warning">Test Token</button>
+            </div>
+        </div>
+
+        <!-- Post Creation Section -->
+        <div class="form-group">
+            <label for="topic">Post Topic:</label>
+            <textarea id="topic" placeholder="Enter your post topic or content idea..."></textarea>
+        </div>
+
+        <div class="form-group">
+            <label for="schedule-time">Schedule Time (optional):</label>
+            <input type="datetime-local" id="schedule-time">
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="actions">
+            <button id="generate-btn" class="btn btn-primary">Generate Post</button>
+            <button id="post-now-btn" class="btn btn-success" disabled>Post Now</button>
+            <button id="schedule-btn" class="btn btn-warning" disabled>Schedule Post</button>
+        </div>
+
+        <!-- Generated Content -->
+        <div id="generated-content" class="hidden">
+            <h3>Generated Post:</h3>
+            <div id="post-preview" class="status info"></div>
+        </div>
+
+        <!-- Status Messages -->
+        <div id="status-messages"></div>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin;
+        let currentPost = '';
+        let accessToken = localStorage.getItem('linkedin_access_token') || '';
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            if (accessToken) {
+                document.getElementById('access-token').value = accessToken;
+                updateAuthStatus('Token loaded from storage', 'info');
+            }
+        });
+
+        // Authentication
+        document.getElementById('auth-btn').addEventListener('click', async function() {
+            try {
+                const customClientId = document.getElementById('client-id').value;
+                const customClientSecret = document.getElementById('client-secret').value;
+                
+                let url = `${API_BASE}/auth/linkedin`;
+                if (customClientId && customClientSecret) {
+                    url += `?client_id=${encodeURIComponent(customClientId)}&client_secret=${encodeURIComponent(customClientSecret)}`;
+                }
+                
+                const response = await fetch(url);
+                const data = await response.json();
+                window.open(data.auth_url, '_blank');
+                showStatus('Please complete authentication in the new window', 'info');
+            } catch (error) {
+                showStatus('Error getting auth URL: ' + error.message, 'error');
+            }
+        });
+
+        // Test Token
+        document.getElementById('test-token-btn').addEventListener('click', async function() {
+            const token = document.getElementById('access-token').value;
+            if (!token) {
+                showStatus('Please enter an access token', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/auth/test`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ access_token: token })
+                });
+                const data = await response.json();
+                
+                if (data.valid) {
+                    accessToken = token;
+                    localStorage.setItem('linkedin_access_token', token);
+                    updateAuthStatus('Token is valid!', 'success');
+                } else {
+                    updateAuthStatus('Token is invalid', 'error');
+                }
+            } catch (error) {
+                showStatus('Error testing token: ' + error.message, 'error');
+            }
+        });
+
+        // Generate Post
+        document.getElementById('generate-btn').addEventListener('click', async function() {
+            const topic = document.getElementById('topic').value;
+            if (!topic) {
+                showStatus('Please enter a topic', 'error');
+                return;
+            }
+
+            this.disabled = true;
+            this.textContent = 'Generating...';
+
+            try {
+                const response = await fetch(`${API_BASE}/generate`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ topic, dry_run: true })
+                });
+                const data = await response.json();
+                
+                currentPost = data.draft;
+                document.getElementById('post-preview').textContent = data.draft;
+                document.getElementById('generated-content').classList.remove('hidden');
+                document.getElementById('post-now-btn').disabled = false;
+                document.getElementById('schedule-btn').disabled = false;
+                
+                showStatus('Post generated successfully!', 'success');
+            } catch (error) {
+                showStatus('Error generating post: ' + error.message, 'error');
+            } finally {
+                this.disabled = false;
+                this.textContent = 'Generate Post';
+            }
+        });
+
+        // Post Now
+        document.getElementById('post-now-btn').addEventListener('click', async function() {
+            if (!currentPost) {
+                showStatus('Please generate a post first', 'error');
+                return;
+            }
+
+            this.disabled = true;
+            this.textContent = 'Posting...';
+
+            try {
+                const response = await fetch(`${API_BASE}/publish`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        topic: document.getElementById('topic').value,
+                        dry_run: !accessToken,
+                        access_token: accessToken
+                    })
+                });
+                const data = await response.json();
+                
+                if (accessToken) {
+                    showStatus('Post published to LinkedIn!', 'success');
+                } else {
+                    showStatus('Post simulated (no access token provided)', 'info');
+                }
+            } catch (error) {
+                showStatus('Error posting: ' + error.message, 'error');
+            } finally {
+                this.disabled = false;
+                this.textContent = 'Post Now';
+            }
+        });
+
+        // Schedule Post
+        document.getElementById('schedule-btn').addEventListener('click', function() {
+            const scheduleTime = document.getElementById('schedule-time').value;
+            if (!scheduleTime) {
+                showStatus('Please select a schedule time', 'error');
+                return;
+            }
+
+            const scheduledDate = new Date(scheduleTime);
+            const now = new Date();
+            
+            if (scheduledDate <= now) {
+                showStatus('Schedule time must be in the future', 'error');
+                return;
+            }
+
+            // Store scheduled post
+            const scheduledPost = {
+                content: currentPost,
+                topic: document.getElementById('topic').value,
+                scheduleTime: scheduleTime,
+                accessToken: accessToken
+            };
+            
+            let scheduledPosts = JSON.parse(localStorage.getItem('scheduledPosts') || '[]');
+            scheduledPosts.push(scheduledPost);
+            localStorage.setItem('scheduledPosts', JSON.stringify(scheduledPosts));
+            
+            showStatus(`Post scheduled for ${scheduledDate.toLocaleString()}`, 'success');
+        });
+
+        // Utility functions
+        function showStatus(message, type) {
+            const statusDiv = document.getElementById('status-messages');
+            const statusElement = document.createElement('div');
+            statusElement.className = `status ${type}`;
+            statusElement.textContent = message;
+            statusDiv.appendChild(statusElement);
+            
+            setTimeout(() => {
+                statusElement.remove();
+            }, 5000);
+        }
+
+        function updateAuthStatus(message, type) {
+            const authStatus = document.getElementById('auth-status');
+            authStatus.textContent = message;
+            authStatus.className = `status ${type}`;
+        }
+
+        // Check for scheduled posts periodically
+        setInterval(checkScheduledPosts, 60000); // Check every minute
+
+        function checkScheduledPosts() {
+            let scheduledPosts = JSON.parse(localStorage.getItem('scheduledPosts') || '[]');
+            const now = new Date();
+            
+            scheduledPosts = scheduledPosts.filter(post => {
+                const scheduleTime = new Date(post.scheduleTime);
+                if (scheduleTime <= now) {
+                    // Time to post
+                    publishScheduledPost(post);
+                    return false; // Remove from scheduled posts
+                }
+                return true; // Keep in scheduled posts
+            });
+            
+            localStorage.setItem('scheduledPosts', JSON.stringify(scheduledPosts));
+        }
+
+        async function publishScheduledPost(post) {
+            try {
+                const response = await fetch(`${API_BASE}/publish`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        topic: post.topic,
+                        dry_run: !post.accessToken,
+                        access_token: post.accessToken
+                    })
+                });
+                
+                if (response.ok) {
+                    showStatus('Scheduled post published!', 'success');
+                } else {
+                    showStatus('Failed to publish scheduled post', 'error');
+                }
+            } catch (error) {
+                showStatus('Error publishing scheduled post: ' + error.message, 'error');
+            }
+        }
+    </script>
+</body>
+</html>
