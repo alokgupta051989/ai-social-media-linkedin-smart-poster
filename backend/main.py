@@ -2,9 +2,9 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
-from agent import generate_post, approve_post
-from utils import save_draft, save_metadata, validate_topic
-from linkedin import mock_linkedin_post, validate_post_content, get_access_token, post_to_linkedin, test_access_token, set_redirect_uri, CLIENT_ID
+from backend.agent import generate_post, approve_post
+from backend.utils import save_draft, save_metadata, validate_topic
+from backend.linkedin import mock_linkedin_post, validate_post_content, get_access_token, post_to_linkedin, test_access_token, set_redirect_uri, CLIENT_ID
 from datetime import datetime
 import os
 
