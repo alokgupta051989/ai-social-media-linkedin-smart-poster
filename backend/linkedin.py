@@ -2,8 +2,8 @@ import requests
 import os
 
 # LinkedIn OAuth credentials
-CLIENT_ID = "78qml2o6hj9sqt"
-CLIENT_SECRET = "WPL_AP1.8NLLfySeNVFqbhKy.G+KISQ=="
+CLIENT_ID = os.getenv("LINKEDIN_CLIENT_ID", "your_client_id")
+CLIENT_SECRET = os.getenv("LINKEDIN_CLIENT_SECRET", "your_client_secret")
 
 # Dynamic redirect URI - will be set by the server
 REDIRECT_URI = None

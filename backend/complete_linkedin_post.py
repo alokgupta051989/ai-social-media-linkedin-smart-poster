@@ -18,8 +18,8 @@ def complete_linkedin_post(auth_code, custom_message=None):
         "grant_type": "authorization_code",
         "code": auth_code,
         "redirect_uri": "https://dzd-cu5gczjwthq0rr.sagemaker.us-east-1.on.aws/proxy/8000/auth/callback",
-        "client_id": "78qml2o6hj9sqt",
-        "client_secret": "WPL_AP1.8NLLfySeNVFqbhKy.G+KISQ=="
+        "client_id": "your_client_id",
+        "client_secret": "your_client_secret"
     }
     
     try:
