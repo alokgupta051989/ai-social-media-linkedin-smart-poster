@@ -1,0 +1,15 @@
+.aws/
+.cache/
+__pycache__/
+*.pyc
+.env
+*.log
+.jupyter/
+.local/
+.config/
+.npm/
+.virtual_documents/
+.sagemaker_sql_editor_api_cache/
+.sparkmagic/
+.ipython/
+.bash_history
