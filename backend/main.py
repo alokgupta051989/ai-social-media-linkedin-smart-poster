@@ -55,7 +55,7 @@ def get_linkedin_auth_url(request: Request, client_id: str = None, client_secret
         # In a real app, you'd store this securely
         pass
     
-    from linkedin import REDIRECT_URI
+    from backend.linkedin import REDIRECT_URI
     auth_url = (
         f"https://www.linkedin.com/oauth/v2/authorization?"
         f"response_type=code&"
